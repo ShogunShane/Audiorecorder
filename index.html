@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Audio Recorder</title>
+    <title>Audio Recorder with Speech-to-Text</title>
     <!-- Link to Google Fonts: Roboto Condensed -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed&display=swap" rel="stylesheet">
     <style>
-        /* Set up the black background and white text */
         body {
             font-family: 'Roboto Condensed', sans-serif;
             background-color: black;
@@ -42,13 +41,21 @@
             width: 100%;
             max-width: 400px;
         }
+
+        textarea {
+            width: 100%;
+            max-width: 400px;
+            height: 150px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Audio Recorder</h1>
+    <h1>Audio Recorder with Speech-to-Text</h1>
     <button id="startRecord">Start Recording</button>
     <button id="stopRecord" disabled>Stop Recording</button>
     <audio id="audioPlayback" controls></audio>
+    <textarea id="transcription" placeholder="Transcribed text will appear here..."></textarea>
 
     <script>
         let mediaRecorder;
@@ -62,11 +69,16 @@
                 audioChunks.push(event.data);
             };
 
-            mediaRecorder.onstop = () => {
+            mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                 const audioUrl = URL.createObjectURL(audioBlob);
                 const audio = document.getElementById('audioPlayback');
                 audio.src = audioUrl;
+
+                // Send the audio blob to the Speech-to-Text API
+                const base64Audio = await convertBlobToBase64(audioBlob);
+                const transcribedText = await sendToGoogleSpeechAPI(base64Audio);
+                document.getElementById('transcription').value = transcribedText;
 
                 audioChunks = []; // Clear the buffer for the next recording
             };
@@ -81,7 +93,37 @@
             document.getElementById('startRecord').disabled = false;
             document.getElementById('stopRecord').disabled = true;
         };
+
+        async function convertBlobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]); // Get base64 part
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function sendToGoogleSpeechAPI(base64Audio) {
+            const apiKey = 'YOUR_GOOGLE_API_KEY'; // Replace with your Google API Key
+            const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    config: {
+                        encoding: 'LINEAR16',
+                        sampleRateHertz: 16000,
+                        languageCode: 'en-US'
+                    },
+                    audio: {
+                        content: base64Audio
+                    }
+                })
+            });
+            const data = await response.json();
+            return data.results?.[0]?.alternatives?.[0]?.transcript || 'Transcription failed';
+        }
     </script>
 </body>
 </html>
-
