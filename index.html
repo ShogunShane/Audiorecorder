@@ -115,8 +115,9 @@
                     },
                     body: JSON.stringify({
                         config: {
-                            encoding: 'WEBM_OPUS', // Specify correct format
-                            languageCode: 'en-US' // Removed sampleRateHertz to allow auto-detection
+                            encoding: 'WEBM_OPUS', // Specify correct format for Opus
+                            sampleRateHertz: 48000, // Set the sample rate to 48kHz to match WEBM Opus
+                            languageCode: 'en-US'
                         },
                         audio: {
                             content: base64Audio
