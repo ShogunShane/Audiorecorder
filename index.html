@@ -115,9 +115,8 @@
                     },
                     body: JSON.stringify({
                         config: {
-                            encoding: 'LINEAR16', // Required by Google Cloud Speech
-                            sampleRateHertz: 16000, // Ensure correct sample rate
-                            languageCode: 'en-US'
+                            encoding: 'WEBM_OPUS', // Specify correct format
+                            languageCode: 'en-US' // Removed sampleRateHertz to allow auto-detection
                         },
                         audio: {
                             content: base64Audio
@@ -141,5 +140,4 @@
         }
     </script>
 </body>
-</html>
 
